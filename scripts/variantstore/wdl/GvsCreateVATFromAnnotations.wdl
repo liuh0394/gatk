@@ -3,19 +3,14 @@ version 1.0
 workflow GvsCreateVATFromAnnotations {
    input {
         File inputFileofFileNames
-        File inputFileofIndexFileNames
         String project_id
         String dataset_name
-        File? nirvana_data_directory = "gs://broad-dsp-spec-ops/scratch/rcremer/Nirvana/NirvanaData.tar.gz"
         File? vat_schema_json_file = "gs://broad-dsp-spec-ops/scratch/rcremer/Nirvana/schemas/vat_schema.json"
         File? variant_transcript_schema_json_file = "gs://broad-dsp-spec-ops/scratch/rcremer/Nirvana/schemas/vt_schema.json"
         File? genes_schema_json_file = "gs://broad-dsp-spec-ops/scratch/rcremer/Nirvana/schemas/genes_schema.json"
         String output_path
         String table_suffix
-
         String? service_account_json_path
-        File? AnAcAf_annotations_template = "gs://broad-dsp-spec-ops/scratch/rcremer/Nirvana/vat/custom_annotations_template.tsv"
-        File ancestry_file
     }
 
     Array[String] contig_array = ["chr1", "chr2", "chr3", "chr4", "chr5", "chr6", "chr7", "chr8", "chr9", "chr10", "chr11", "chr12", "chr13", "chr14", "chr15", "chr16", "chr17", "chr18", "chr19", "chr20", "chr21", "chr22", "chrX", "chrY", "chrM"]
@@ -49,19 +44,8 @@ workflow GvsCreateVATFromAnnotations {
          output_path = output_path,
          table_suffix = table_suffix,
          service_account_json_path = service_account_json_path,
-         prep_jsons_done = GvsCreateVATAnnotations.done
+         prep_jsons_done = PrepAnnotationJson.done
   }
-
-    call BigQuerySmokeTest {
-       input:
-         project_id = project_id,
-         dataset_name = dataset_name,
-         counts_variants = GvsCreateVATAnnotations.count_variants,
-         track_dropped_variants = GvsCreateVATAnnotations.track_dropped,
-         table_suffix = table_suffix,
-         service_account_json_path = service_account_json_path,
-         load_jsons_done = BigQueryLoadJson.done
-    }
 
     scatter(i in range(length(contig_array)) ) {
       call BigQueryExportVat {
@@ -107,7 +91,7 @@ task GetAnnotations {
     # ------------------------------------------------
     # Runtime settings:
     runtime {
-        docker: "us.gcr.io/broad-dsde-methods/variantstore:rc_fix_clinvar_20220405"
+        docker: "us.gcr.io/broad-dsde-methods/variantstore:ah_var_store_20211101"
         memory: "1 GB"
         preemptible: 3
         cpu: "1"
@@ -117,6 +101,64 @@ task GetAnnotations {
     # Outputs:
     output {
         Array[File] input_jsons = read_lines(updated_input_files)
+    }
+}
+
+task PrepAnnotationJson {
+    input {
+        File annotation_json
+        String output_file_suffix
+        String output_path
+        String? service_account_json_path
+    }
+
+    String output_vt_json = "vat_vt_bq_load" + output_file_suffix
+    String output_genes_json = "vat_genes_bq_load" + output_file_suffix
+    String output_vt_gcp_path = output_path + 'vt/'
+    String output_genes_gcp_path = output_path + 'genes/'
+    String output_annotations_gcp_path = output_path + 'annotations/'
+
+    String has_service_account_file = if (defined(service_account_json_path)) then 'true' else 'false'
+
+    ## note: these temp files do not currently get cleaned up as some of them may be helpful for recovery.
+
+    command <<<
+        set -e
+
+        if [ ~{has_service_account_file} = 'true' ]; then
+            gsutil cp ~{service_account_json_path} local.service_account.json
+            export GOOGLE_APPLICATION_CREDENTIALS=local.service_account.json
+            gcloud auth activate-service-account --key-file=local.service_account.json
+        fi
+
+        # for debugging purposes only
+        gsutil cp ~{annotation_json} '~{output_annotations_gcp_path}'
+
+        ## the annotation jsons are split into the specific VAT schema
+        python3 /app/create_variant_annotation_table.py \
+          --annotated_json ~{annotation_json} \
+          --output_vt_json ~{output_vt_json} \
+          --output_genes_json ~{output_genes_json}
+
+        gsutil cp ~{output_vt_json} '~{output_vt_gcp_path}'
+        gsutil cp ~{output_genes_json} '~{output_genes_gcp_path}'
+
+     >>>
+    # ------------------------------------------------
+    # Runtime settings:
+    runtime {
+        docker: "us.gcr.io/broad-dsde-methods/variantstore:ah_var_store_20211101"
+        memory: "8 GB"
+        preemptible: 5
+        cpu: "1"
+        disks: "local-disk 250 SSD"
+    }
+    # ------------------------------------------------
+    # Outputs:
+    output {
+        File vat_vt_json="~{output_vt_json}"
+        File vat_genes_json="~{output_genes_json}"
+        Boolean done = true
     }
 }
 
