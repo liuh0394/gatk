@@ -173,7 +173,7 @@ def get_subpopulation_calculations(subpop_annotations):
     max_af = None
     max_sc = None
     max_subpop = ""
-    for gvs_subpop in gvs_subpopulations: # note these will break if a subpopulation is missing
+    for gvs_subpop in gvs_subpopulations:
       subpop_ac_val = subpop_annotations.get("_".join(["AC", gvs_subpop]))
       subpop_an_val = subpop_annotations.get("_".join(["AN", gvs_subpop]))
       subpop_af_val = subpop_annotations.get("_".join(["AF", gvs_subpop]))
