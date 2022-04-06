@@ -155,9 +155,9 @@ workflows:
          - ah_var_store
    - name: GvsCreateVATFromAnnotations
      subclass: WDL
-     primaryDescriptorPath: /scripts/variantstore/wdl/GvsCreateVAT.wdl
+     primaryDescriptorPath: /scripts/variantstore/wdl/GvsCreateVATFromAnnotations.wdl
      testParameterFiles:
-       - /scripts/variantstore/wdl/GvsCreateVAT.example.inputs.json
+       - /scripts/variantstore/wdl/GvsCreateVATFromAnnotations.example.inputs.json
      filters:
        branches:
          - master
