@@ -28,7 +28,7 @@ workflow GvsCreateVATFromAnnotations {
         call PrepAnnotationJson {
           input:
             annotation_json = GetAnnotations.input_jsons[i],
-            output_file_suffix = basename(GetAnnotations.input_jsons[i], ".json.gz"),
+            output_file_suffix = basename(GetAnnotations.input_jsons[i], "_annotated.json.gz") + ".json.gz",
             output_path = output_path,
             service_account_json_path = service_account_json_path
         }
@@ -55,7 +55,8 @@ workflow GvsCreateVATFromAnnotations {
             dataset_name = dataset_name,
             output_path = output_path,
             table_suffix = table_suffix,
-            service_account_json_path = service_account_json_path
+            service_account_json_path = service_account_json_path,
+            load_jsons_done = BigQueryLoadJson.done
       }
     }
 }
@@ -111,16 +112,20 @@ task PrepAnnotationJson {
         String output_path
         String? service_account_json_path
     }
-
+    parameter_meta {
+        annotation_json: {
+          localization_optional: true
+        }
+    }
     String output_vt_json = "vat_vt_bq_load" + output_file_suffix
     String output_genes_json = "vat_genes_bq_load" + output_file_suffix
     String output_vt_gcp_path = output_path + 'vt/'
     String output_genes_gcp_path = output_path + 'genes/'
-    String output_annotations_gcp_path = output_path + 'annotations/'
 
     String has_service_account_file = if (defined(service_account_json_path)) then 'true' else 'false'
+    String updated_annotation_json = if (defined(service_account_json_path)) then basename(annotation_json) else annotation_json
 
-    ## note: these temp files do not currently get cleaned up as some of them may be helpful for recovery.
+
 
     command <<<
         set -e
@@ -129,14 +134,13 @@ task PrepAnnotationJson {
             gsutil cp ~{service_account_json_path} local.service_account.json
             export GOOGLE_APPLICATION_CREDENTIALS=local.service_account.json
             gcloud auth activate-service-account --key-file=local.service_account.json
-        fi
 
-        # for debugging purposes only
-        gsutil cp ~{annotation_json} '~{output_annotations_gcp_path}'
+            gsutil cp ~{annotation_json} ~{updated_annotation_json}
+        fi
 
         ## the annotation jsons are split into the specific VAT schema
         python3 /app/create_variant_annotation_table.py \
-          --annotated_json ~{annotation_json} \
+          --annotated_json ~{updated_annotation_json} \
           --output_vt_json ~{output_vt_json} \
           --output_genes_json ~{output_genes_json}
 
@@ -147,7 +151,7 @@ task PrepAnnotationJson {
     # ------------------------------------------------
     # Runtime settings:
     runtime {
-        docker: "us.gcr.io/broad-dsde-methods/variantstore:ah_var_store_20211101"
+        docker: "us.gcr.io/broad-dsde-methods/variantstore:rc_vat_update_2022_05_06"
         memory: "8 GB"
         preemptible: 5
         cpu: "1"
@@ -390,6 +394,7 @@ task BigQueryExportVat {
         String output_path
         String table_suffix
         String? service_account_json_path
+        String load_jsons_done
     }
 
     String vat_table = "vat_" + table_suffix
