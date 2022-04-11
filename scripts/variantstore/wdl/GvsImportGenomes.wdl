@@ -12,7 +12,7 @@ workflow GvsImportGenomes {
 
     File interval_list = "gs://gcp-public-data--broad-references/hg38/v0/wgs_calling_regions.hg38.noCentromeres.noTelomeres.interval_list"
     Int? load_data_preemptible_override
-    File? load_data_gatk_override = "gs://broad-dsp-spec-ops/scratch/bigquery-jointcalling/jars/ah_var_store_20220406/gatk-package-4.2.0.0-480-gb62026a-SNAPSHOT-local.jar"
+    File? load_data_gatk_override = "gs://broad-dsp-spec-ops/scratch/bigquery-jointcalling/jars/gg_VS-360_QuietLog4J_20220412/gatk-package-4.2.0.0-489-g729c123-SNAPSHOT-local.jar"
     String? service_account_json_path
   }
 
@@ -277,7 +277,7 @@ task LoadData {
     done
   >>>
   runtime {
-    docker: "us.gcr.io/broad-gatk/gatk:4.1.7.0"
+    docker: "us.gcr.io/broad-gatk/gatk:4.2.6.0"
     maxRetries: 1
     memory: "3.75 GB"
     disks: "local-disk 50 HDD"

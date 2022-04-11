@@ -1,9 +1,5 @@
 package org.broadinstitute.hellbender.tools.gvs.ingest;
 
-import com.google.cloud.bigquery.BigQuery;
-import com.google.cloud.bigquery.StandardTableDefinition;
-import com.google.cloud.bigquery.Table;
-import com.google.cloud.bigquery.TableId;
 import htsjdk.samtools.SAMSequenceDictionary;
 import htsjdk.samtools.util.RuntimeIOException;
 import htsjdk.variant.variantcontext.Allele;
