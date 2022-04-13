@@ -117,6 +117,7 @@ workflows:
        branches:
          - master
          - ah_var_store
+         - gg_VS-373_ZeroPadVcfNames
    - name: GvsImportGenomes
      subclass: WDL
      primaryDescriptorPath: /scripts/variantstore/wdl/GvsImportGenomes.wdl
