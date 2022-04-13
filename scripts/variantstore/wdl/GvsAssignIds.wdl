@@ -65,7 +65,7 @@ workflow GvsAssignIds {
   }
 
   output {
-    Boolean gvs_ids_created = true
+    Boolean done = true
     File gvs_ids_tsv = AssignIds.gvs_ids_tsv
   }
 }
