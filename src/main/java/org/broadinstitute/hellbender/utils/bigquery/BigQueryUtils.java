@@ -15,6 +15,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.broadinstitute.hellbender.exceptions.GATKException;
 
+import javax.swing.text.html.Option;
 import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -416,7 +417,7 @@ public final class BigQueryUtils {
                                                                   final String userDefinedFunctions,
                                                                   Map<String, String> labels) {
 
-        return executeQueryWithStorageAPI(queryString, fieldsToRetrieve, projectID, datasetID, userDefinedFunctions, false, labels);
+        return executeQueryWithStorageAPI(queryString, fieldsToRetrieve, projectID, datasetID, userDefinedFunctions, false, labels, null);
     }
 
     public static StorageAPIAvroReader executeQueryWithStorageAPI(final String queryString,
@@ -425,8 +426,10 @@ public final class BigQueryUtils {
                                                                   final String datasetID,
                                                                   final String userDefinedFunctions,
                                                                   final boolean runQueryInBatchMode,
-                                                                  Map<String, String> labels) {
-        final String tempTableName = String.format("%s_%s", "temp_table_extract_features", UUID.randomUUID().toString().replace('-', '_'));
+                                                                  Map<String, String> labels,
+                                                                  final String workflow_name) {
+        final String workflow = Optional.ofNullable(workflow_name).orElse("defaultValue");
+        final String tempTableName = String.format("%s_%s_%s", "temp_table", workflow, UUID.randomUUID().toString().replace('-', '_'));
         final String tempTableFullyQualified = String.format("%s.%s.%s", projectID, datasetID, tempTableName);
 
         final String queryStringWithUDFs = userDefinedFunctions == null ? queryString : userDefinedFunctions + queryString;
