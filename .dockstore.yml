@@ -128,16 +128,6 @@ workflows:
          - master
          - ah_var_store
          - kc_wdl_gatk_override
-   - name: GvsPrepareCallset
-     subclass: WDL
-     primaryDescriptorPath: /scripts/variantstore/wdl/GvsPrepareCallset.wdl
-     testParameterFiles:
-       - /scripts/variantstore/wdl/GvsPrepareCallset.example.inputs.json
-     filters:
-       branches:
-         - master
-         - ah_var_store
-         - rc-clean-up-temp-tables
    - name: GvsPrepareRangesCallset
      subclass: WDL
      primaryDescriptorPath: /scripts/variantstore/wdl/GvsPrepareRangesCallset.wdl
@@ -148,6 +138,7 @@ workflows:
          - master
          - ah_var_store
          - rc-vs-225-add-AD
+         - rc-clean-up-temp-tables
    - name: GvsCreateVAT
      subclass: WDL
      primaryDescriptorPath: /scripts/variantstore/wdl/GvsCreateVAT.wdl
