@@ -3,16 +3,21 @@ package org.broadinstitute.hellbender.utils.bigquery;
 import com.google.api.client.util.ExponentialBackOff;
 import com.google.api.core.ApiFuture;
 import com.google.cloud.bigquery.storage.v1beta2.*;
+import com.google.common.collect.ImmutableSet;
 import com.google.protobuf.Descriptors;
-import io.grpc.Status;
+import io.grpc.Status.Code;
 import io.grpc.StatusRuntimeException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.broadinstitute.hellbender.exceptions.GATKException;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.IOException;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
+
+import static io.grpc.Status.Code.*;
 
 
 public class CommittedBQWriter implements AutoCloseable {
@@ -34,6 +39,8 @@ public class CommittedBQWriter implements AutoCloseable {
             setRandomizationFactor(0.5).
             build();
 
+    private final Set<Code> retryableCodes = ImmutableSet.of(ABORTED, CANCELLED, INTERNAL, UNAVAILABLE);
+
     protected CommittedBQWriter(String projectId, String datasetName, String tableName, WriteStream.Type type) {
         this.parentTable = TableName.of(projectId, datasetName, tableName);
         this.streamType = type;
@@ -53,17 +60,15 @@ public class CommittedBQWriter implements AutoCloseable {
         writer = JsonStreamWriter.newBuilder(writeStream.getName(), writeStream.getTableSchema()).build();
     }
 
-    public AppendRowsResponse addJsonRow(JSONObject row) throws Descriptors.DescriptorValidationException, ExecutionException, InterruptedException, IOException {
-        AppendRowsResponse response = null;
+    public void addJsonRow(JSONObject row) throws Descriptors.DescriptorValidationException, ExecutionException, InterruptedException, IOException {
         if (writer == null) {
             createStream();
         }
         jsonArr.put(row);
 
         if (jsonArr.length() >= batchSize) {
-            response = writeJsonArray();
+            writeJsonArray();
         }
-        return response;
     }
 
     protected AppendRowsResponse writeJsonArray() throws Descriptors.DescriptorValidationException, ExecutionException, InterruptedException, IOException {
@@ -73,13 +78,11 @@ public class CommittedBQWriter implements AutoCloseable {
             response = future.get();
             jsonArr = new JSONArray();
         } catch (StatusRuntimeException ex) {
-            Status status = ex.getStatus();
-            if (status == Status.ABORTED || status == Status.INTERNAL || status == Status.CANCELLED || status == Status.UNAVAILABLE) {
+            if (retryableCodes.contains(ex.getStatus().getCode())) {
                 long backOffMillis = backoff.nextBackOffMillis();
 
                 if (backOffMillis == ExponentialBackOff.STOP) {
-                    logger.error("Caught exception writing to BigQuery but retries are exhausted, throwing.", ex);
-                    throw ex;
+                    throw new GATKException("Caught exception writing to BigQuery and write retries are exhausted", ex);
                 }
 
                 logger.warn("Caught exception writing to BigQuery, retrying...", ex);
