@@ -14,7 +14,6 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.IOException;
-import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
 import static io.grpc.Status.Code.*;
@@ -38,8 +37,6 @@ public class CommittedBQWriter implements AutoCloseable {
             setMultiplier(1.5).
             setRandomizationFactor(0.5).
             build();
-
-    private final Set<Code> retryableCodes = ImmutableSet.of(ABORTED, CANCELLED, INTERNAL, UNAVAILABLE);
 
     protected CommittedBQWriter(String projectId, String datasetName, String tableName, WriteStream.Type type) {
         this.parentTable = TableName.of(projectId, datasetName, tableName);
@@ -72,13 +69,14 @@ public class CommittedBQWriter implements AutoCloseable {
     }
 
     protected AppendRowsResponse writeJsonArray() throws Descriptors.DescriptorValidationException, ExecutionException, InterruptedException, IOException {
-        AppendRowsResponse response = null;
+        AppendRowsResponse response;
         try {
             ApiFuture<AppendRowsResponse> future = writer.append(jsonArr);
             response = future.get();
             jsonArr = new JSONArray();
         } catch (StatusRuntimeException ex) {
-            if (retryableCodes.contains(ex.getStatus().getCode())) {
+            Code code = ex.getStatus().getCode();
+            if (ImmutableSet.of(ABORTED, CANCELLED, INTERNAL, UNAVAILABLE).contains(code)) {
                 long backOffMillis = backoff.nextBackOffMillis();
 
                 if (backOffMillis == ExponentialBackOff.STOP) {
