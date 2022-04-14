@@ -57,7 +57,6 @@ workflow GvsUnified {
         Int extract_scatter_count
 
         File interval_weights_bed = "gs://broad-public-datasets/gvs/weights/gvs_vet_weights_1kb.bed"
-        File gatk_override = "gs://broad-dsp-spec-ops/scratch/bigquery-jointcalling/jars/rc-add-AD-04112022/gatk-package-4.2.0.0-498-g1f53709-SNAPSHOT-local.jar"
 
         String extract_output_file_base_name = filter_set_name
 

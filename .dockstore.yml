@@ -110,6 +110,7 @@ workflows:
        branches:
          - master
          - ah_var_store
+         - vs_357_integration
    - name: GvsExtractCallset
      subclass: WDL
      primaryDescriptorPath: /scripts/variantstore/wdl/GvsExtractCallset.wdl
