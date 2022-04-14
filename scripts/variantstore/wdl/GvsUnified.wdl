@@ -34,8 +34,6 @@ workflow GvsUnified {
         Int create_filter_set_scatter_count
         Array[String] snp_recalibration_annotation_values = ["AS_QD", "AS_MQRankSum", "AS_ReadPosRankSum", "AS_FS", "AS_MQ", "AS_SOR"]
 
-        File interval_list = "gs://gcp-public-data--broad-references/hg38/v0/wgs_calling_regions.hg38.noCentromeres.noTelomeres.interval_list"
-
         Int? INDEL_VQSR_max_gaussians_override = 4
         Int? INDEL_VQSR_mem_gb_override
         Int? SNP_VQSR_max_gaussians_override = 6
@@ -43,9 +41,6 @@ workflow GvsUnified {
         # End GvsCreateFilterSet
 
         # Begin GvsPrepareRangesCallset
-        # true for control samples only, false for participant samples only
-        Boolean control_samples = false
-
         String extract_table_prefix
 
         String query_project = project_id
@@ -56,6 +51,22 @@ workflow GvsUnified {
         Array[String]? query_labels
         File? sample_names_to_extract
         # End GvsPrepareRangesCallset
+
+        # Begin GvsExtractCallset
+        String query_project = project_id
+        Int extract_scatter_count
+
+        File interval_weights_bed = "gs://broad-public-datasets/gvs/weights/gvs_vet_weights_1kb.bed"
+        File gatk_override = "gs://broad-dsp-spec-ops/scratch/bigquery-jointcalling/jars/rc-add-AD-04112022/gatk-package-4.2.0.0-498-g1f53709-SNAPSHOT-local.jar"
+
+        String extract_output_file_base_name = filter_set_name
+
+        Int? extract_maxretries_override
+        Int? extract_preemptible_override
+        String? extract_output_gcs_dir
+        Int? split_intervals_disk_size_override
+        Int? split_intervals_mem_override
+        # End GvsExtractCallset
     }
 
     call AssignIds.GvsAssignIds as AssignIds {
@@ -110,9 +121,10 @@ workflow GvsUnified {
 
     call PrepareRangesCallset.GvsPrepareCallset {
         input:
+            go = GvsCreateFilterSet.done,
             project_id = project_id,
             dataset_name = dataset_name,
-            control_samples = control_samples,
+            control_samples = samples_are_controls,
             extract_table_prefix = extract_table_prefix,
             query_project = query_project,
             destination_project = destination_project,
@@ -125,6 +137,23 @@ workflow GvsUnified {
 
     call ExtractCallset.GvsExtractCallset {
         input:
-
+            go = GvsPrepareCallset.done,
+            dataset_name = dataset_name,
+            project_id = project_id,
+            control_samples = samples_are_controls,
+            extract_table_prefix = extract_table_prefix,
+            filter_set_name = filter_set_name,
+            query_project = query_project,
+            scatter_count = extract_scatter_count,
+            interval_list = interval_list,
+            interval_weights_bed = interval_weights_bed,
+            gatk_override = gatk_override,
+            output_file_base_name = extract_output_file_base_name,
+            extract_maxretries_override = extract_maxretries_override,
+            extract_preemptible_override = extract_preemptible_override,
+            output_gcs_dir = extract_output_gcs_dir,
+            service_account_json_path = service_account_json_path,
+            split_intervals_disk_size_override = split_intervals_disk_size_override,
+            split_intervals_mem_override = split_intervals_mem_override
     }
 }
