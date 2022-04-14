@@ -173,9 +173,9 @@ workflows:
        branches:
          - master
          - ah_var_store
-   - name: GvsQuickstart
+   - name: GvsIntegration
      subclass: WDL
-     primaryDescriptorPath: /scripts/variantstore/wdl/GvsQuickstart.wdl
+     primaryDescriptorPath: /scripts/variantstore/wdl/GvsIntegration.wdl
      filters:
        branches:
          - master
