@@ -173,7 +173,7 @@ workflows:
        branches:
          - master
          - ah_var_store
-   - name: GvsIntegration
+   - name: GvsUnified
      subclass: WDL
      primaryDescriptorPath: /scripts/variantstore/wdl/GvsUnified.wdl
      filters:
