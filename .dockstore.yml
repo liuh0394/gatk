@@ -175,7 +175,7 @@ workflows:
          - ah_var_store
    - name: GvsIntegration
      subclass: WDL
-     primaryDescriptorPath: /scripts/variantstore/wdl/GvsIntegration.wdl
+     primaryDescriptorPath: /scripts/variantstore/wdl/GvsUnified.wdl
      filters:
        branches:
          - master
