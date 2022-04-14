@@ -173,14 +173,14 @@ workflows:
        branches:
          - master
          - ah_var_store
-   - name: GvsQuickstart
-     subclass: WDL
-     primaryDescriptorPath: /scripts/variantstore/wdl/GvsQuickstart.wdl
-     filters:
-       branches:
-         - master
-         - ah_var_store
-         - vs_357_integration
+#   - name: GvsQuickstart
+#     subclass: WDL
+#     primaryDescriptorPath: /scripts/variantstore/wdl/GvsQuickstart.wdl
+#     filters:
+#       branches:
+#         - master
+#         - ah_var_store
+#         - vs_357_integration
    - name: MitochondriaPipeline
      subclass: WDL
      primaryDescriptorPath: /scripts/mitochondria_m2_wdl/MitochondriaPipeline.wdl
