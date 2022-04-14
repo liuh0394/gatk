@@ -7,7 +7,7 @@ import "GvsCreateFilterSet.wdl" as CreateFilterSet
 import "GvsPrepareRangesCallset.wdl" as PrepareRangesCallset
 import "GvsExtractCallset.wdl" as ExtractCallset
 
-workflow GvsIntegration {
+workflow GvsUnified {
     input {
         # Begin GvsAssignIds
         String dataset_name
