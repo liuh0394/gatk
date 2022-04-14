@@ -89,6 +89,8 @@ public class CommittedBQWriter implements AutoCloseable {
                 Thread.sleep(backOffMillis);
                 createStream();
                 response = writeJsonArray();
+            } else {
+                throw ex;
             }
         }
         return response;
