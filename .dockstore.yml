@@ -65,7 +65,7 @@ workflows:
        branches:
          - master
          - ah_var_store
-         - vs_357_integration_test_of_quickstart
+         - vs_357_integration
    - name: GvsAoUReblockGvcf
      subclass: WDL
      primaryDescriptorPath: /scripts/variantstore/wdl/GvsAoUReblockGvcf.wdl
@@ -90,7 +90,7 @@ workflows:
        branches:
          - master
          - ah_var_store
-         - vs_357_integration_test_of_quickstart
+         - vs_357_integration
    - name: GvsCreateAltAllele
      subclass: WDL
      primaryDescriptorPath: /scripts/variantstore/wdl/GvsCreateAltAllele.wdl
@@ -100,7 +100,7 @@ workflows:
        branches:
          - master
          - ah_var_store
-         - vs_357_integration_test_of_quickstart
+         - vs_357_integration
    - name: GvsCreateTables
      subclass: WDL
      primaryDescriptorPath: /scripts/variantstore/wdl/GvsCreateTables.wdl
@@ -119,7 +119,7 @@ workflows:
        branches:
          - master
          - ah_var_store
-         - vs_357_integration_test_of_quickstart
+         - vs_357_integration
    - name: GvsImportGenomes
      subclass: WDL
      primaryDescriptorPath: /scripts/variantstore/wdl/GvsImportGenomes.wdl
@@ -129,7 +129,7 @@ workflows:
        branches:
          - master
          - ah_var_store
-         - vs_357_integration_test_of_quickstart
+         - vs_357_integration
    - name: GvsPrepareRangesCallset
      subclass: WDL
      primaryDescriptorPath: /scripts/variantstore/wdl/GvsPrepareRangesCallset.wdl
@@ -139,7 +139,7 @@ workflows:
        branches:
          - master
          - ah_var_store
-         - vs_357_integration_test_of_quickstart
+         - vs_357_integration
    - name: GvsCreateVAT
      subclass: WDL
      primaryDescriptorPath: /scripts/variantstore/wdl/GvsCreateVAT.wdl
@@ -165,7 +165,7 @@ workflows:
        branches:
          - master
          - ah_var_store
-         - vs_357_integration_test_of_quickstart
+         - vs_357_integration
    - name: GvsWithdrawSamples
      subclass: WDL
      primaryDescriptorPath: /scripts/variantstore/wdl/GvsWithdrawSamples.wdl
@@ -180,7 +180,7 @@ workflows:
        branches:
          - master
          - ah_var_store
-         - vs_357_integration_test_of_quickstart
+         - vs_357_integration
    - name: MitochondriaPipeline
      subclass: WDL
      primaryDescriptorPath: /scripts/mitochondria_m2_wdl/MitochondriaPipeline.wdl
