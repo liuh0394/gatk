@@ -27,14 +27,14 @@ public class CommittedBQWriter implements AutoCloseable {
     protected JsonStreamWriter writer;
     protected TableName parentTable;
     protected WriteStream.Type streamType;
+    protected int maxRetries = 3;
     protected int batchSize = 10000;
     protected JSONArray jsonArr = new JSONArray();
 
     private final ExponentialBackOff backoff = new ExponentialBackOff.Builder().
-            setInitialIntervalMillis(500).
-            setMaxElapsedTimeMillis(60000).
+            setInitialIntervalMillis(2000).
             setMaxIntervalMillis(30000).
-            setMultiplier(1.5).
+            setMultiplier(2).
             setRandomizationFactor(0.5).
             build();
 
@@ -68,7 +68,11 @@ public class CommittedBQWriter implements AutoCloseable {
         }
     }
 
-    protected AppendRowsResponse writeJsonArray() throws Descriptors.DescriptorValidationException, ExecutionException, InterruptedException, IOException {
+    protected void writeJsonArray() throws Descriptors.DescriptorValidationException, ExecutionException, InterruptedException, IOException {
+        writeJsonArray(0);
+    }
+
+    protected AppendRowsResponse writeJsonArray(int retryCount) throws Descriptors.DescriptorValidationException, ExecutionException, InterruptedException, IOException {
         AppendRowsResponse response;
         try {
             ApiFuture<AppendRowsResponse> future = writer.append(jsonArr);
@@ -77,16 +81,15 @@ public class CommittedBQWriter implements AutoCloseable {
         } catch (StatusRuntimeException ex) {
             Code code = ex.getStatus().getCode();
             if (ImmutableSet.of(ABORTED, CANCELLED, INTERNAL, UNAVAILABLE).contains(code)) {
-                long backOffMillis = backoff.nextBackOffMillis();
-
-                if (backOffMillis == ExponentialBackOff.STOP) {
-                    throw new GATKException("Caught exception writing to BigQuery and write retries are exhausted", ex);
+                if (retryCount >= maxRetries) {
+                    throw new GATKException("Caught exception writing to BigQuery and " + maxRetries + " write retries are exhausted", ex);
                 }
 
-                logger.warn("Caught exception writing to BigQuery, retrying...", ex);
+                logger.warn("Caught exception writing to BigQuery, " + (maxRetries - retryCount - 1) + " retries remaining.", ex);
+                long backOffMillis = backoff.nextBackOffMillis();
                 Thread.sleep(backOffMillis);
                 createStream();
-                response = writeJsonArray();
+                response = writeJsonArray(retryCount + 1);
             } else {
                 throw ex;
             }
